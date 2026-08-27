@@ -2,6 +2,7 @@ import { useState } from 'react'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
+import { ButtonPrototype } from './ButtonPrototype'
 import './App.css'
 
 function App() {
@@ -29,6 +30,9 @@ function App() {
           Count is {count}
         </button>
       </section>
+
+      {/* PROTOTYPE — throwaway, delete before merge */}
+      <ButtonPrototype />
 
       <div className="ticks"></div>
 
