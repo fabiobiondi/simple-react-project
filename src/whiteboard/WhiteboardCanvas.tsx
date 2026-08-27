@@ -24,19 +24,64 @@ export function WhiteboardCanvas() {
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current
-    const target = canvas?.getContext('2d')
-    if (!canvas || !target) return
+    if (!canvas) return
 
-    const ratio = window.devicePixelRatio || 1
-    canvas.width = canvas.clientWidth * ratio
-    canvas.height = canvas.clientHeight * ratio
-    // One transform, so everything else can speak in CSS pixels.
-    target.setTransform(ratio, 0, 0, ratio, 0, 0)
+    /**
+     * Re-fits the canvas to its box and repaints the drawing onto it.
+     *
+     * Assigning `width` or `height` wipes the bitmap, the transform and every
+     * style — even when the value assigned is the one already there — so this
+     * is never a cheap no-op, and the drawing has to be painted back every
+     * time. The strokes keep their coordinates: a bigger box shows more of the
+     * whiteboard rather than a magnified copy of it.
+     */
+    const fit = () => {
+      const target = canvas.getContext('2d')
+      if (!target) return
 
-    paintDrawing(target, drawingRef.current.strokes, {
-      width: canvas.clientWidth,
-      height: canvas.clientHeight,
-    })
+      const ratio = window.devicePixelRatio || 1
+      const { clientWidth: width, clientHeight: height } = canvas
+
+      canvas.width = Math.round(width * ratio)
+      canvas.height = Math.round(height * ratio)
+      // One transform, so everything else can speak in CSS pixels.
+      target.setTransform(ratio, 0, 0, ratio, 0, 0)
+
+      paintDrawing(target, drawingRef.current.strokes, { width, height })
+    }
+
+    fit()
+
+    const observer = new ResizeObserver(fit)
+    observer.observe(canvas)
+
+    /**
+     * `devicePixelRatio` changes when the page is zoomed and when the window
+     * moves to a display of a different density, and it emits no event of its
+     * own — a resize listener does not see either. The only standard signal is
+     * a media query carrying the current value, which therefore has to be
+     * rebuilt every time it fires.
+     */
+    let stopWatchingRatio: (() => void) | undefined
+    const watchRatio = () => {
+      stopWatchingRatio?.()
+      const query = window.matchMedia(
+        `(resolution: ${window.devicePixelRatio}dppx)`,
+      )
+      const onRatioChange = () => {
+        fit()
+        watchRatio()
+      }
+      query.addEventListener('change', onRatioChange)
+      stopWatchingRatio = () =>
+        query.removeEventListener('change', onRatioChange)
+    }
+    watchRatio()
+
+    return () => {
+      observer.disconnect()
+      stopWatchingRatio?.()
+    }
   }, [])
 
   const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
