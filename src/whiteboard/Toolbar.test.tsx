@@ -29,8 +29,8 @@ describe('Toolbar', () => {
   it('offers every colour as a named button', () => {
     renderToolbar()
 
-    for (const colour of COLORS) {
-      expect(screen.getByRole('button', { name: colour.name })).toBeVisible()
+    for (const color of COLORS) {
+      expect(screen.getByRole('button', { name: color.name })).toBeVisible()
     }
   })
 
@@ -46,9 +46,9 @@ describe('Toolbar', () => {
     renderToolbar({ ...DEFAULT_TOOL, color: COLORS[1].value })
 
     const pressed = COLORS.filter(
-      (colour) =>
+      (color) =>
         screen
-          .getByRole('button', { name: colour.name })
+          .getByRole('button', { name: color.name })
           .getAttribute('aria-pressed') === 'true',
     )
 
@@ -94,8 +94,8 @@ describe('Toolbar', () => {
     // A semi-transparent stroke would leave a necklace of darker dots where
     // the incremental strokes overlap, and would make live drawing and a
     // repaint disagree. Opacity is a correctness constraint here, not a style.
-    for (const colour of COLORS) {
-      expect(colour.value).toMatch(/^#[0-9a-f]{6}$/i)
+    for (const color of COLORS) {
+      expect(color.value).toMatch(/^#[0-9a-f]{6}$/i)
     }
   })
 
@@ -131,9 +131,9 @@ describe('Toolbar', () => {
   it('claims no colour while erasing, which would be a lie', () => {
     renderToolbar({ ...DEFAULT_TOOL, erasing: true })
 
-    for (const colour of COLORS) {
+    for (const color of COLORS) {
       expect(
-        screen.getByRole('button', { name: colour.name }),
+        screen.getByRole('button', { name: color.name }),
       ).toHaveAttribute('aria-pressed', 'false')
     }
   })
@@ -169,6 +169,25 @@ describe('Toolbar', () => {
 
     expect(onClear).toHaveBeenCalledOnce()
     expect(onToolChange).not.toHaveBeenCalled()
+  })
+
+  it('reaches every command with the keyboard, in the order they are shown', async () => {
+    renderToolbar()
+    const commands = screen.getAllByRole('button')
+
+    for (const command of commands) {
+      await userEvent.tab()
+      expect(command).toHaveFocus()
+    }
+  })
+
+  it('activates a command from the keyboard', async () => {
+    const { onClear } = renderToolbar()
+
+    screen.getByRole('button', { name: /clear/i }).focus()
+    await userEvent.keyboard('{Enter}')
+
+    expect(onClear).toHaveBeenCalledOnce()
   })
 
   it('asks to export the board', async () => {

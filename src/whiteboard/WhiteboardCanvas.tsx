@@ -29,16 +29,20 @@ export interface WhiteboardCanvasProps {
   /**
    * What the next stroke will be drawn with. Strokes already drawn keep
    * theirs. Not a Tool: whether the eraser is down has already been resolved
-   * into a colour by the time it gets here.
+   * into a colour by the time it gets here. And not `style`, which on a
+   * component rendering a canvas would read as the DOM property it is not.
    */
-  style: StrokeStyle
+  strokeStyle: StrokeStyle
   ref?: Ref<WhiteboardHandle>
 }
 
 /** The name a board is saved under. */
 const FILENAME = 'whiteboard.png'
 
-export function WhiteboardCanvas({ style, ref }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({
+  strokeStyle,
+  ref,
+}: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Not state: a stroke gathers a point per pointer event, and React does not
   // draw any of them.
@@ -112,6 +116,8 @@ export function WhiteboardCanvas({ style, ref }: WhiteboardCanvasProps) {
       observer.disconnect()
       stopWatchingRatio?.()
     }
+    // `fit` is stable, so this runs once: listed rather than left out so that
+    // giving it a dependency later cannot silently leave a stale observer.
   }, [fit])
 
   useImperativeHandle(ref, () => ({
@@ -126,8 +132,17 @@ export function WhiteboardCanvas({ style, ref }: WhiteboardCanvasProps) {
       // The board's white is painted on the canvas, so what comes out is what
       // is seen — no transparent holes where nothing was drawn or where the
       // eraser went.
-      canvasRef.current?.toBlob((blob) => {
-        if (!blob) return
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          // Reachable: a canvas with no area encodes to nothing. Saying so is
+          // the least this can do — telling the person is a question of how
+          // this app reports failure, which nothing has decided yet.
+          console.error('The board could not be encoded as a PNG.')
+          return
+        }
 
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
@@ -150,7 +165,7 @@ export function WhiteboardCanvas({ style, ref }: WhiteboardCanvasProps) {
     event.currentTarget.setPointerCapture(event.pointerId)
     // Copied into the stroke as it begins, so changing tool later leaves
     // what is already drawn alone.
-    drawingRef.current.begin(pointOf(event), style)
+    drawingRef.current.begin(pointOf(event), strokeStyle)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {

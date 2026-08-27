@@ -1,11 +1,5 @@
+import { BOARD } from './board'
 import type { StrokeStyle } from './drawing'
-
-/**
- * The board's own white. Lives here, with the rest of the domain's constants,
- * rather than in the painter: that the board is white is a fact about the
- * board, and the painter is one of the things that has to know it.
- */
-export const BOARD = '#ffffff'
 
 /**
  * The colours on offer. All opaque, and that is a correctness constraint

@@ -1,5 +1,7 @@
+import type { CSSProperties } from 'react'
 import { Button } from '../components/Button'
-import { BOARD, COLORS, WIDTHS, type Tool } from './tools'
+import { BOARD } from './board'
+import { COLORS, WIDTHS, type Tool } from './tools'
 import './Toolbar.css'
 
 export interface ToolbarProps {
@@ -29,7 +31,14 @@ export function Toolbar({
   // A group rather than an ARIA toolbar: that role promises arrow-key
   // navigation with a roving tabindex, and these are plain tab stops.
   return (
-    <div className="toolbar" role="group" aria-label="Drawing tools">
+    <div
+      className="toolbar"
+      role="group"
+      aria-label="Drawing tools"
+      // Handed to CSS once, so the board's white has a single source even in
+      // the stylesheet.
+      style={{ '--board': BOARD } as CSSProperties}
+    >
       <div className="toolbar-group">
         {COLORS.map((color) => (
           <Button
@@ -64,17 +73,23 @@ export function Toolbar({
             aria-pressed={tool.width === width.value}
             onClick={() => onToolChange({ ...tool, width: width.value })}
           >
-            {/* Ink on paper: the nib is the colour in use, so it needs the
-                board's white behind it rather than the page's background. */}
-            <span className="toolbar-paper" style={{ background: BOARD }}>
+            {/*
+              Ink on paper: the nib is the colour in use, so it needs the
+              board's white behind it rather than the page's background.
+
+              While erasing no colour is in use, so the nib falls back to the
+              grey the stylesheet gives it — fixed rather than themed, because
+              the paper behind it is always the board's white. A themed grey
+              washed out to 1.27:1 against it in the light theme: invisible,
+              which is the one thing this preview must not be.
+            */}
+            <span className="toolbar-paper">
               <span
                 className="toolbar-nib"
                 style={{
                   inlineSize: `${width.value}px`,
                   blockSize: `${width.value}px`,
-                  // While erasing there is no colour in use, but the size still
-                // has to read: a transparent nib made the three identical.
-                background: tool.erasing ? 'var(--border)' : tool.color,
+                  background: tool.erasing ? undefined : tool.color,
                 }}
               />
             </span>
@@ -91,7 +106,7 @@ export function Toolbar({
           aria-pressed={tool.erasing}
           onClick={() => onToolChange({ ...tool, erasing: !tool.erasing })}
         >
-          <span className="toolbar-block" style={{ background: BOARD }} />
+          <span className="toolbar-block" />
         </Button>
       </div>
 

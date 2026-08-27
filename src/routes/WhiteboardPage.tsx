@@ -30,7 +30,7 @@ export function WhiteboardPage() {
           onClear={() => board.current?.clear()}
           onExport={() => board.current?.exportPng()}
         />
-        <WhiteboardCanvas ref={board} style={strokeStyleOf(tool)} />
+        <WhiteboardCanvas ref={board} strokeStyle={strokeStyleOf(tool)} />
       </Panel>
     </main>
   )

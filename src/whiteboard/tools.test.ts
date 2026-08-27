@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { BOARD, COLORS, DEFAULT_TOOL, strokeStyleOf, WIDTHS } from './tools'
+import { BOARD } from './board'
+import { COLORS, DEFAULT_TOOL, strokeStyleOf, WIDTHS } from './tools'
 
 describe('strokeStyleOf', () => {
   it('draws in the chosen colour', () => {

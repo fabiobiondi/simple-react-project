@@ -42,10 +42,13 @@
   block-size: 1.375rem;
   border: 1px solid var(--border);
   border-radius: 50%;
+  background: var(--board);
 }
 
 .toolbar-nib {
   border-radius: 50%;
+  /* Fixed, not themed: the paper behind it is always the board's white. */
+  background: #6b6375;
 }
 
 .toolbar-eraser {
@@ -68,4 +71,5 @@
   block-size: 0.875rem;
   border: 1px solid var(--border);
   border-radius: 3px;
+  background: var(--board);
 }

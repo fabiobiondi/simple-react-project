@@ -1,6 +1,6 @@
 import type { Stroke, StrokeStyle } from './drawing'
 import { segmentsOf, type Segment } from './geometry'
-import { BOARD } from './tools'
+import { BOARD } from './board'
 
 /** What a canvas must be told before anything is painted on it. */
 export type Size = { width: number; height: number }
