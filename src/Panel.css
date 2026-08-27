@@ -7,8 +7,89 @@
   border-radius: 8px;
   background: var(--bg);
 
+  .panel-icon {
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  /*
+   * The title carries the heading typography itself rather than leaning on the
+   * global `h1, h2` rules, so every headingLevel renders identically. Without
+   * this, levels 3-6 fall back to the browser's defaults.
+   */
+  .panel-title {
+    margin: 0 0 8px;
+    font-family: var(--heading);
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 118%;
+    letter-spacing: -0.24px;
+    color: var(--text-h);
+
+    @media (max-width: 1024px) {
+      font-size: 20px;
+    }
+  }
+
+  /*
+   * The toggle inherits the heading's typography rather than restyling it, so a
+   * collapsible panel's title looks identical to a plain one — only the chevron
+   * and the pointer cursor mark it as interactive.
+   */
+  .panel-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    text-align: left;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /*
+     * The open/closed affordance reads the button's expanded state directly,
+     * never a separate class, so the visual state cannot disagree with the
+     * semantic one.
+     */
+    &::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      margin-left: auto;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg) translate(-2px, -2px);
+    }
+
+    &[aria-expanded='false']::after {
+      transform: rotate(-45deg) translate(-2px, -2px);
+    }
+  }
+
   .panel-body {
     color: var(--text);
+  }
+
+  /*
+   * Deliberately no `display` rule on .panel-body: the collapsed state is driven
+   * by the `hidden` attribute, and a nested display declaration here (0,2,0)
+   * would beat the user agent's `[hidden]` rule (0,1,0), silently putting
+   * collapsed content back into the tab order.
+   */
+
+  .panel-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
   }
 
   @media (max-width: 1024px) {
