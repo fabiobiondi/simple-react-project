@@ -1,0 +1,129 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+
+  &:focus-visible {
+    outline: 2px solid #aa3bff;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+}
+
+.btn-sm {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+.btn-md {
+  font-size: 16px;
+  padding: 10px 18px;
+}
+
+.btn-lg {
+  font-size: 18px;
+  padding: 14px 26px;
+}
+
+.btn-primary {
+  color: #fff;
+  background: #aa3bff;
+
+  &:hover:not(:disabled) {
+    background: #9425e8;
+  }
+  &:active:not(:disabled) {
+    background: #8010d4;
+  }
+}
+
+.btn-secondary {
+  color: #08060d;
+  background: #fff;
+  border-color: #e5e4e7;
+
+  &:hover:not(:disabled) {
+    background: #faf9fb;
+    border-color: #d2d0d6;
+  }
+  &:active:not(:disabled) {
+    background: #f2f1f4;
+  }
+}
+
+.btn-ghost {
+  color: #6b6375;
+  background: transparent;
+
+  &:hover:not(:disabled) {
+    color: #08060d;
+    background: rgba(8, 6, 13, 0.06);
+  }
+  &:active:not(:disabled) {
+    background: rgba(8, 6, 13, 0.1);
+  }
+}
+
+/*
+ * Button owns its own colours rather than reading the custom properties in
+ * index.css, so it also owns its own dark-mode palette. See issue #7: this
+ * duplication is the deliberate cost of that decision, not an oversight.
+ */
+@media (prefers-color-scheme: dark) {
+  .btn:focus-visible {
+    outline-color: #c084fc;
+  }
+
+  .btn-primary {
+    color: #16171d;
+    background: #c084fc;
+
+    &:hover:not(:disabled) {
+      background: #cf9ffd;
+    }
+    &:active:not(:disabled) {
+      background: #b06ef0;
+    }
+  }
+
+  .btn-secondary {
+    color: #f3f4f6;
+    background: #16171d;
+    border-color: #2e303a;
+
+    &:hover:not(:disabled) {
+      background: #1f2028;
+      border-color: #3d404c;
+    }
+    &:active:not(:disabled) {
+      background: #23242d;
+    }
+  }
+
+  .btn-ghost {
+    color: #9ca3af;
+
+    &:hover:not(:disabled) {
+      color: #f3f4f6;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    &:active:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+}
