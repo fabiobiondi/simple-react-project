@@ -33,7 +33,7 @@ function App() {
       <section id="next-steps">
         <Panel
           id="docs"
-          className="next-steps-card"
+          className="next-steps-panel"
           title="Documentation"
           icon={
             <svg className="icon" role="presentation" aria-hidden="true">
@@ -59,7 +59,7 @@ function App() {
         </Panel>
         <Panel
           id="social"
-          className="next-steps-card"
+          className="next-steps-panel"
           title="Connect with us"
           icon={
             <svg className="icon" role="presentation" aria-hidden="true">
