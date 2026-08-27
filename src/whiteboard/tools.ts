@@ -1,4 +1,5 @@
 import type { StrokeStyle } from './drawing'
+import { BACKGROUND } from './painter'
 
 /**
  * The colours on offer. All opaque, and that is a correctness constraint
@@ -19,8 +20,29 @@ export const WIDTHS = [
   { name: 'Thick', value: 10 },
 ] as const
 
+/**
+ * What the board is being drawn with. `color` is the pen's colour and stays
+ * put while erasing, so putting the eraser down brings the pen back as it was.
+ */
+export type Tool = StrokeStyle & { erasing: boolean }
+
 /** What the board starts on. */
-export const DEFAULT_TOOL: StrokeStyle = {
+export const DEFAULT_TOOL: Tool = {
   color: COLOURS[0].value,
   width: WIDTHS[1].value,
+  erasing: false,
+}
+
+/**
+ * What a stroke begun with this tool is drawn with.
+ *
+ * The eraser is not a mechanism: it is a stroke the colour of the board,
+ * exactly as a cloth is on a real whiteboard. Nothing downstream — not the
+ * drawing, not the painter — can tell one from any other stroke.
+ */
+export function strokeStyleOf(tool: Tool): StrokeStyle {
+  return {
+    color: tool.erasing ? BACKGROUND : tool.color,
+    width: tool.width,
+  }
 }

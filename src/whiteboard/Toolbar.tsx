@@ -1,13 +1,16 @@
 import { Button } from '../components/Button'
-import type { StrokeStyle } from './drawing'
-import { COLOURS, WIDTHS } from './tools'
+import { COLOURS, WIDTHS, type Tool } from './tools'
 import './Toolbar.css'
 
 export interface ToolbarProps {
   /** What the next stroke will be drawn with. */
-  tool: StrokeStyle
+  tool: Tool
   /** Called with the tool the toolbar would like to be in use. */
-  onToolChange: (tool: StrokeStyle) => void
+  onToolChange: (tool: Tool) => void
+  /** Called to empty the board. */
+  onClear: () => void
+  /** Called to take the board away as a PNG. */
+  onExport: () => void
 }
 
 /**
@@ -17,7 +20,12 @@ export interface ToolbarProps {
  * Choices are Buttons, and their pressed state is what says which is in use —
  * that is the part a screen reader can hear, where the coloured swatch is not.
  */
-export function Toolbar({ tool, onToolChange }: ToolbarProps) {
+export function Toolbar({
+  tool,
+  onToolChange,
+  onClear,
+  onExport,
+}: ToolbarProps) {
   return (
     <div className="toolbar" role="toolbar" aria-label="Drawing tools">
       <div className="toolbar-group">
@@ -28,8 +36,12 @@ export function Toolbar({ tool, onToolChange }: ToolbarProps) {
             size="sm"
             className="toolbar-colour"
             aria-label={colour.name}
-            aria-pressed={tool.color === colour.value}
-            onClick={() => onToolChange({ ...tool, color: colour.value })}
+            // Not pressed while erasing: the pen's colour is remembered, but
+            // claiming it is in use would be a lie.
+            aria-pressed={!tool.erasing && tool.color === colour.value}
+            onClick={() =>
+              onToolChange({ ...tool, color: colour.value, erasing: false })
+            }
           >
             <span
               className="toolbar-swatch"
@@ -58,12 +70,34 @@ export function Toolbar({ tool, onToolChange }: ToolbarProps) {
                 style={{
                   inlineSize: `${width.value}px`,
                   blockSize: `${width.value}px`,
-                  background: tool.color,
+                  background: tool.erasing ? 'transparent' : tool.color,
                 }}
               />
             </span>
           </Button>
         ))}
+      </div>
+
+      <div className="toolbar-group">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="toolbar-eraser"
+          aria-label="Eraser"
+          aria-pressed={tool.erasing}
+          onClick={() => onToolChange({ ...tool, erasing: !tool.erasing })}
+        >
+          <span className="toolbar-block" />
+        </Button>
+      </div>
+
+      <div className="toolbar-group">
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Clear
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onExport}>
+          Export PNG
+        </Button>
       </div>
     </div>
   )

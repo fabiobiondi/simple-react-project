@@ -18,6 +18,8 @@ export interface Drawing {
   begin(point: Point, style: StrokeStyle): void
   extend(point: Point): void
   end(): void
+  /** Empties the board. The tool in use is none of the drawing's business. */
+  clear(): void
 }
 
 /**
@@ -55,6 +57,13 @@ export function createDrawing(): Drawing {
 
     end() {
       if (inProgress) inProgress.closed = true
+      inProgress = null
+    },
+
+    clear() {
+      strokes.length = 0
+      // Also lets go of the stroke being drawn: otherwise the pointer would
+      // keep feeding one that is no longer on the board.
       inProgress = null
     },
   }

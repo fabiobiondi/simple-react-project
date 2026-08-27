@@ -6,8 +6,17 @@ import { COLOURS, DEFAULT_TOOL, WIDTHS } from './tools'
 
 const renderToolbar = (tool = DEFAULT_TOOL) => {
   const onToolChange = vi.fn()
-  render(<Toolbar tool={tool} onToolChange={onToolChange} />)
-  return { onToolChange }
+  const onClear = vi.fn()
+  const onExport = vi.fn()
+  render(
+    <Toolbar
+      tool={tool}
+      onToolChange={onToolChange}
+      onClear={onClear}
+      onExport={onExport}
+    />,
+  )
+  return { onToolChange, onClear, onExport }
 }
 
 describe('Toolbar', () => {
@@ -65,8 +74,8 @@ describe('Toolbar', () => {
     await userEvent.click(screen.getByRole('button', { name: COLOURS[1].name }))
 
     expect(onToolChange).toHaveBeenCalledWith({
+      ...DEFAULT_TOOL,
       color: COLOURS[1].value,
-      width: DEFAULT_TOOL.width,
     })
   })
 
@@ -76,7 +85,7 @@ describe('Toolbar', () => {
     await userEvent.click(screen.getByRole('button', { name: WIDTHS[2].name }))
 
     expect(onToolChange).toHaveBeenCalledWith({
-      color: DEFAULT_TOOL.color,
+      ...DEFAULT_TOOL,
       width: WIDTHS[2].value,
     })
   })
@@ -90,8 +99,78 @@ describe('Toolbar', () => {
     }
   })
 
-  it('starts on a colour and a width it actually offers', () => {
-    expect(COLOURS.map((c) => c.value)).toContain(DEFAULT_TOOL.color)
-    expect(WIDTHS.map((w) => w.value)).toContain(DEFAULT_TOOL.width)
+  it('offers the eraser, and shows when it is in use', () => {
+    renderToolbar()
+    const eraser = screen.getByRole('button', { name: 'Eraser' })
+    expect(eraser).toHaveAttribute('aria-pressed', 'false')
+
+    renderToolbar({ ...DEFAULT_TOOL, erasing: true })
+
+    expect(screen.getAllByRole('button', { name: 'Eraser' })[1]).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('puts the eraser down when it is pressed again', async () => {
+    const { onToolChange } = renderToolbar({ ...DEFAULT_TOOL, erasing: true })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Eraser' }))
+
+    expect(onToolChange).toHaveBeenCalledWith({
+      ...DEFAULT_TOOL,
+      erasing: false,
+    })
+  })
+
+  it('claims no colour while erasing, which would be a lie', () => {
+    renderToolbar({ ...DEFAULT_TOOL, erasing: true })
+
+    for (const colour of COLOURS) {
+      expect(
+        screen.getByRole('button', { name: colour.name }),
+      ).toHaveAttribute('aria-pressed', 'false')
+    }
+  })
+
+  it('picking a colour puts the eraser down', async () => {
+    const { onToolChange } = renderToolbar({ ...DEFAULT_TOOL, erasing: true })
+
+    await userEvent.click(screen.getByRole('button', { name: COLOURS[2].name }))
+
+    expect(onToolChange).toHaveBeenCalledWith({
+      ...DEFAULT_TOOL,
+      color: COLOURS[2].value,
+      erasing: false,
+    })
+  })
+
+  it('lets the eraser keep its own width', async () => {
+    const { onToolChange } = renderToolbar({ ...DEFAULT_TOOL, erasing: true })
+
+    await userEvent.click(screen.getByRole('button', { name: WIDTHS[2].name }))
+
+    expect(onToolChange).toHaveBeenCalledWith({
+      ...DEFAULT_TOOL,
+      width: WIDTHS[2].value,
+      erasing: true,
+    })
+  })
+
+  it('asks to clear the board without disturbing the tool', async () => {
+    const { onClear, onToolChange } = renderToolbar()
+
+    await userEvent.click(screen.getByRole('button', { name: /clear/i }))
+
+    expect(onClear).toHaveBeenCalledOnce()
+    expect(onToolChange).not.toHaveBeenCalled()
+  })
+
+  it('asks to export the board', async () => {
+    const { onExport } = renderToolbar()
+
+    await userEvent.click(screen.getByRole('button', { name: /export/i }))
+
+    expect(onExport).toHaveBeenCalledOnce()
   })
 })

@@ -48,3 +48,26 @@
 .toolbar-nib {
   border-radius: 50%;
 }
+
+.toolbar-eraser {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+}
+
+.toolbar-eraser[aria-pressed='true'] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A block of the board's own white: what the eraser draws with. */
+.toolbar-block {
+  inline-size: 1.125rem;
+  block-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: #fff;
+}

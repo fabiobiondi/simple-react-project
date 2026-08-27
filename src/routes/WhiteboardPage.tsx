@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Panel } from '../components/Panel'
-import type { StrokeStyle } from '../whiteboard/drawing'
 import { Toolbar } from '../whiteboard/Toolbar'
-import { DEFAULT_TOOL } from '../whiteboard/tools'
-import { WhiteboardCanvas } from '../whiteboard/WhiteboardCanvas'
+import { DEFAULT_TOOL, strokeStyleOf, type Tool } from '../whiteboard/tools'
+import {
+  WhiteboardCanvas,
+  type WhiteboardHandle,
+} from '../whiteboard/WhiteboardCanvas'
 import './WhiteboardPage.css'
 
 /**
@@ -16,13 +18,19 @@ import './WhiteboardPage.css'
  * changes, and the drawing does not.
  */
 export function WhiteboardPage() {
-  const [tool, setTool] = useState<StrokeStyle>(DEFAULT_TOOL)
+  const [tool, setTool] = useState<Tool>(DEFAULT_TOOL)
+  const board = useRef<WhiteboardHandle>(null)
 
   return (
     <main className="whiteboard-page">
       <Panel title="Whiteboard" headingLevel={1}>
-        <Toolbar tool={tool} onToolChange={setTool} />
-        <WhiteboardCanvas tool={tool} />
+        <Toolbar
+          tool={tool}
+          onToolChange={setTool}
+          onClear={() => board.current?.clear()}
+          onExport={() => board.current?.exportPng()}
+        />
+        <WhiteboardCanvas ref={board} tool={strokeStyleOf(tool)} />
       </Panel>
     </main>
   )

@@ -1,4 +1,10 @@
-import { useLayoutEffect, useRef, type PointerEvent } from 'react'
+import {
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  type PointerEvent,
+  type Ref,
+} from 'react'
 import { createDrawing, type StrokeStyle } from './drawing'
 import { finalSegment, newestSegment, type Point } from './geometry'
 import { paintDrawing, paintSegment } from './painter'
@@ -9,12 +15,25 @@ const pointOf = (event: PointerEvent<HTMLCanvasElement>): Point => ({
   y: event.nativeEvent.offsetY,
 })
 
+/**
+ * What the board can be asked to do that is not drawing: both act on the
+ * canvas itself, which is not something a prop can express.
+ */
+export interface WhiteboardHandle {
+  clear(): void
+  exportPng(): void
+}
+
 export interface WhiteboardCanvasProps {
   /** What the next stroke will be drawn with. Strokes already drawn keep theirs. */
   tool: StrokeStyle
+  ref?: Ref<WhiteboardHandle>
 }
 
-export function WhiteboardCanvas({ tool }: WhiteboardCanvasProps) {
+/** The name a board is saved under. */
+const FILENAME = 'whiteboard.png'
+
+export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Not state: a stroke gathers a point per pointer event, and React does not
   // draw any of them.
@@ -23,6 +42,8 @@ export function WhiteboardCanvas({ tool }: WhiteboardCanvasProps) {
   // jsdom has no 2D context, so every use of it is optional rather than a
   // guarantee. The component still renders and still records strokes there.
   const context = () => canvasRef.current?.getContext('2d') ?? null
+  // Set once the canvas is fitted; repainting from outside the effect needs it.
+  const repaintRef = useRef(() => {})
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current
@@ -52,6 +73,7 @@ export function WhiteboardCanvas({ tool }: WhiteboardCanvasProps) {
       paintDrawing(target, drawingRef.current.strokes, { width, height })
     }
 
+    repaintRef.current = fit
     fit()
 
     const observer = new ResizeObserver(fit)
@@ -85,6 +107,31 @@ export function WhiteboardCanvas({ tool }: WhiteboardCanvasProps) {
       stopWatchingRatio?.()
     }
   }, [])
+
+  useImperativeHandle(ref, () => ({
+    clear() {
+      drawingRef.current.clear()
+      // The bitmap keeps whatever was painted on it until something repaints:
+      // emptying the strokes is not enough to empty the board.
+      repaintRef.current()
+    },
+
+    exportPng() {
+      // The board's white is painted on the canvas, so what comes out is what
+      // is seen — no transparent holes where nothing was drawn or where the
+      // eraser went.
+      canvasRef.current?.toBlob((blob) => {
+        if (!blob) return
+
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = FILENAME
+        link.click()
+        URL.revokeObjectURL(url)
+      }, 'image/png')
+    },
+  }))
 
   const handlePointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
     if (event.button !== 0) return

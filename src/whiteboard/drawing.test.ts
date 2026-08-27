@@ -103,6 +103,28 @@ describe('createDrawing', () => {
     expect(drawing.strokes.map((s) => s.width)).toEqual([3, 9])
   })
 
+  it('clears every stroke', () => {
+    const drawing = createDrawing()
+    drawing.begin({ x: 0, y: 0 }, black)
+    drawing.end()
+
+    drawing.clear()
+
+    expect(drawing.strokes).toEqual([])
+  })
+
+  it('clearing mid-stroke also ends the stroke being drawn', () => {
+    const drawing = createDrawing()
+    drawing.begin({ x: 0, y: 0 }, black)
+
+    drawing.clear()
+    // otherwise the pointer would keep feeding a stroke no longer on the board
+    drawing.extend({ x: 5, y: 5 })
+
+    expect(drawing.strokes).toEqual([])
+    expect(drawing.current).toBeNull()
+  })
+
   it('keeps strokes in the order they were drawn', () => {
     const drawing = createDrawing()
 
