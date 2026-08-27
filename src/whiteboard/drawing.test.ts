@@ -15,7 +15,7 @@ describe('createDrawing', () => {
     drawing.begin({ x: 1, y: 2 }, black)
 
     expect(drawing.strokes).toEqual([
-      { points: [{ x: 1, y: 2 }], color: '#000000', width: 3 },
+      { points: [{ x: 1, y: 2 }], closed: false, color: '#000000', width: 3 },
     ])
   })
 
@@ -66,17 +66,29 @@ describe('createDrawing', () => {
     drawing.extend({ x: 1, y: 1 })
 
     expect(drawing.strokes).toHaveLength(1)
-    expect(drawing.isDrawing).toBe(true)
+    expect(drawing.current).toBe(drawing.strokes[0])
   })
 
-  it('knows when nothing is being drawn', () => {
+  it('has no stroke in progress before one begins or after it ends', () => {
     const drawing = createDrawing()
-    expect(drawing.isDrawing).toBe(false)
+    expect(drawing.current).toBeNull()
 
     drawing.begin({ x: 0, y: 0 }, black)
     drawing.end()
 
-    expect(drawing.isDrawing).toBe(false)
+    expect(drawing.current).toBeNull()
+  })
+
+  it('leaves a stroke open until it ends, so a repaint does not close it early', () => {
+    const drawing = createDrawing()
+
+    drawing.begin({ x: 0, y: 0 }, black)
+    drawing.extend({ x: 1, y: 1 })
+    expect(drawing.strokes[0].closed).toBe(false)
+
+    drawing.end()
+
+    expect(drawing.strokes[0].closed).toBe(true)
   })
 
   it('gives every stroke the style it was begun with', () => {

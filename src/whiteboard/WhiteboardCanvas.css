@@ -1,7 +1,10 @@
+/*
+ * How the board behaves, not how big it is: the page that places it decides
+ * that, and the canvas measures whatever box it is given.
+ */
 .whiteboard-canvas {
   display: block;
   inline-size: 100%;
-  block-size: 100%;
   border-radius: 8px;
   touch-action: none;
   cursor: crosshair;

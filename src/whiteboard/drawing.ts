@@ -4,13 +4,17 @@ import type { Point } from './geometry'
 export type StrokeStyle = { color: string; width: number }
 
 /** One press-drag-release, kept as the points it passed through. */
-export type Stroke = StrokeStyle & { points: Point[] }
+export type Stroke = StrokeStyle & {
+  points: Point[]
+  /** False while the stroke is still being drawn: it has no final piece yet. */
+  closed: boolean
+}
 
 export interface Drawing {
   /** Every stroke, oldest first, including one still being drawn. */
   readonly strokes: readonly Stroke[]
-  /** Whether a stroke is currently being drawn. */
-  readonly isDrawing: boolean
+  /** The stroke being drawn, or null when the pointer is not down. */
+  readonly current: Stroke | null
   begin(point: Point, style: StrokeStyle): void
   extend(point: Point): void
   end(): void
@@ -35,13 +39,13 @@ export function createDrawing(): Drawing {
     get strokes() {
       return strokes
     },
-    get isDrawing() {
-      return inProgress !== null
+    get current() {
+      return inProgress
     },
 
     begin(point, style) {
       // Pushed at once, so a redraw mid-stroke does not lose what is being drawn.
-      inProgress = { points: [point], ...style }
+      inProgress = { points: [point], closed: false, ...style }
       strokes.push(inProgress)
     },
 
@@ -50,6 +54,7 @@ export function createDrawing(): Drawing {
     },
 
     end() {
+      if (inProgress) inProgress.closed = true
       inProgress = null
     },
   }

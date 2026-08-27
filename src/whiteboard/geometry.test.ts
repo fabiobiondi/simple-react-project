@@ -12,15 +12,19 @@ const trail = (count: number) =>
 
 describe('segmentsOf', () => {
   it('draws nothing for a stroke with no points', () => {
-    expect(segmentsOf([])).toEqual([])
+    expect(segmentsOf([], true)).toEqual([])
   })
 
-  it('draws a dot for a stroke that never moved', () => {
-    expect(segmentsOf([p(3, 4)])).toEqual([{ kind: 'dot', at: p(3, 4) }])
+  it('draws a stroke that never moved as a line to itself', () => {
+    // which a round cap paints as a dot, so the painter is not left deciding
+    // what a dot is
+    expect(segmentsOf([p(3, 4)], true)).toEqual([
+      { kind: 'line', from: p(3, 4), to: p(3, 4) },
+    ])
   })
 
   it('draws a straight line between two points', () => {
-    expect(segmentsOf([p(0, 0), p(10, 0)])).toEqual([
+    expect(segmentsOf([p(0, 0), p(10, 0)], true)).toEqual([
       { kind: 'line', from: p(0, 0), to: p(10, 0) },
     ])
   })
@@ -28,7 +32,7 @@ describe('segmentsOf', () => {
   it('curves through the middle points rather than joining them straight', () => {
     const points = [p(0, 0), p(10, 0), p(20, 10)]
 
-    expect(segmentsOf(points)).toEqual([
+    expect(segmentsOf(points, true)).toEqual([
       // the recorded point becomes the control, the midpoint the end: this is
       // what bends the path instead of cornering at it
       { kind: 'quad', from: p(0, 0), control: p(10, 0), to: p(15, 5) },
@@ -37,31 +41,41 @@ describe('segmentsOf', () => {
   })
 
   it('leaves no gaps: each segment starts where the previous one ended', () => {
-    const segments = segmentsOf(trail(8))
+    const segments = segmentsOf(trail(8), true)
 
     for (let i = 1; i < segments.length; i++) {
-      const previous = segments[i - 1]
-      const current = segments[i]
-      if (previous.kind === 'dot' || current.kind === 'dot') continue
-      expect(current.from).toEqual(previous.to)
+      expect(segments[i].from).toEqual(segments[i - 1].to)
     }
+  })
+
+  it('leaves a stroke still being drawn open', () => {
+    const points = trail(6)
+
+    const open = segmentsOf(points, false)
+    const closed = segmentsOf(points, true)
+
+    // the closing piece has not been painted live yet: painting it during a
+    // repaint would leave a spur the live drawing never had
+    expect(closed).toEqual([...open, finalSegment(points)])
   })
 })
 
-describe('drawing live and redrawing agree', () => {
+describe('drawing live and repainting agree', () => {
   // The guarantee the whole design rests on: what is painted point by point
-  // while the mouse moves must be exactly what a full redraw paints later.
+  // while the mouse moves must be exactly what a repaint paints later.
+  // `segmentsOf` is built directly rather than by replaying `newestSegment`,
+  // so this compares two independent derivations rather than one with itself.
   it.each([1, 2, 3, 4, 5, 9, 20])('for a stroke of %i points', (count) => {
     const points = trail(count)
 
-    const live = []
+    const painted = []
     for (let n = 1; n <= count; n++) {
       const segment = newestSegment(points.slice(0, n))
-      if (segment) live.push(segment)
+      if (segment) painted.push(segment)
     }
-    live.push(finalSegment(points))
 
-    expect(live).toEqual(segmentsOf(points))
+    expect(painted).toEqual(segmentsOf(points, false))
+    expect([...painted, finalSegment(points)]).toEqual(segmentsOf(points, true))
   })
 })
 

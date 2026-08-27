@@ -3,8 +3,8 @@ import { segmentsOf, type Segment } from './geometry'
 
 /**
  * The whiteboard is white, and its white is painted on the canvas rather than
- * showing through from behind it. That is what makes the eraser a white stroke
- * and what keeps an exported PNG from coming out full of holes.
+ * showing through from behind it: a repaint starts from a cleared bitmap, and
+ * without this the cleared parts would stay transparent.
  */
 export const BACKGROUND = '#ffffff'
 
@@ -16,49 +16,37 @@ export type Size = { width: number; height: number }
  * and stops there. A canvas cannot be tested under jsdom, so anything worth
  * testing has to live where it can be — in the geometry and the drawing.
  * A decision that ends up here has been put in the wrong place.
+ *
+ * The one thing set here rather than passed in is the round cap and join,
+ * because it is load-bearing rather than decorative: the geometry represents
+ * a stroke that never moved as a line from a point to itself, and only a
+ * round cap paints that as a dot.
  */
-function paintSegment(
+export function paintSegment(
   context: CanvasRenderingContext2D,
   segment: Segment,
   style: StrokeStyle,
 ) {
   context.strokeStyle = style.color
-  context.fillStyle = style.color
   context.lineWidth = style.width
   context.lineCap = 'round'
   context.lineJoin = 'round'
-  context.beginPath()
 
-  switch (segment.kind) {
-    case 'dot':
-      context.arc(segment.at.x, segment.at.y, style.width / 2, 0, Math.PI * 2)
-      context.fill()
-      return
-    case 'line':
-      context.moveTo(segment.from.x, segment.from.y)
-      context.lineTo(segment.to.x, segment.to.y)
-      break
-    case 'quad':
-      context.moveTo(segment.from.x, segment.from.y)
-      context.quadraticCurveTo(
-        segment.control.x,
-        segment.control.y,
-        segment.to.x,
-        segment.to.y,
-      )
-      break
+  context.beginPath()
+  context.moveTo(segment.from.x, segment.from.y)
+
+  if (segment.kind === 'quad') {
+    context.quadraticCurveTo(
+      segment.control.x,
+      segment.control.y,
+      segment.to.x,
+      segment.to.y,
+    )
+  } else {
+    context.lineTo(segment.to.x, segment.to.y)
   }
 
   context.stroke()
-}
-
-/** Paints the piece a stroke has just grown, while it is being drawn. */
-export function paintNewest(
-  context: CanvasRenderingContext2D,
-  stroke: Stroke,
-  segment: Segment,
-) {
-  paintSegment(context, segment, stroke)
 }
 
 /** Paints everything, from scratch, onto a canvas that has been cleared. */
@@ -71,7 +59,7 @@ export function paintDrawing(
   context.fillRect(0, 0, size.width, size.height)
 
   for (const stroke of strokes) {
-    for (const segment of segmentsOf(stroke.points)) {
+    for (const segment of segmentsOf(stroke.points, stroke.closed)) {
       paintSegment(context, segment, stroke)
     }
   }

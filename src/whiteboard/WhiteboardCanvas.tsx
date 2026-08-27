@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, type PointerEvent } from 'react'
 import { createDrawing } from './drawing'
 import { finalSegment, newestSegment, type Point } from './geometry'
-import { paintDrawing, paintNewest } from './painter'
+import { paintDrawing, paintSegment } from './painter'
 import './WhiteboardCanvas.css'
 
 /** The one pen there is, until the toolbar arrives. */
@@ -94,25 +94,26 @@ export function WhiteboardCanvas() {
 
   const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
     const drawing = drawingRef.current
-    if (!drawing.isDrawing) return
+    const stroke = drawing.current
+    if (!stroke) return
 
     drawing.extend(pointOf(event))
 
-    const stroke = drawing.strokes[drawing.strokes.length - 1]
     const segment = newestSegment(stroke.points)
     const target = context()
     // Only the piece the newest point completed: painting the whole stroke on
     // every event would slow down as the stroke grew.
-    if (segment && target) paintNewest(target, stroke, segment)
+    if (segment && target) paintSegment(target, segment, stroke)
   }
 
   const handlePointerUp = () => {
     const drawing = drawingRef.current
-    if (!drawing.isDrawing) return
+    const stroke = drawing.current
+    if (!stroke) return
 
-    const stroke = drawing.strokes[drawing.strokes.length - 1]
     const target = context()
-    if (target) paintNewest(target, stroke, finalSegment(stroke.points))
+    // The piece that closes the stroke, which no further point will curve.
+    if (target) paintSegment(target, finalSegment(stroke.points), stroke)
     drawing.end()
   }
 

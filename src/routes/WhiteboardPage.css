@@ -1,23 +1,20 @@
 .whiteboard-page {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   padding: 1.5rem;
-  block-size: 100%;
-  min-block-size: 0;
 }
 
-.whiteboard-page h1 {
-  margin: 0;
-  color: var(--text-h);
+/*
+ * A definite height, because a canvas given a percentage of an auto-height
+ * parent falls back to its intrinsic 150px. How big the board should really
+ * be is still open — see issue #16.
+ */
+.whiteboard-page .whiteboard-canvas {
+  block-size: min(65vh, 720px);
 }
 
-/* Owns the space the canvas will fill, so the canvas has something to measure. */
-.whiteboard-surface {
-  flex: 1;
-  min-block-size: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: var(--shadow);
-}
+/*
+ * No background here: the board's white is painted onto the canvas, so a
+ * white sheet behind it would hide the canvas failing to paint rather than
+ * reveal it.
+ */
