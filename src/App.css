@@ -54,8 +54,8 @@
 #next-steps {
   display: flex;
   border-top: 1px solid var(--border);
-  /* Not redundant with .panel's own text-align: it is what .next-steps-panel
-     inherits from, at both this width and the narrow one. */
+  /* Overrides the centring #root applies to the whole page. The panels inherit
+     this, and the centred value at the narrow breakpoint below. */
   text-align: left;
 
   /* The panels bring their own padding, border and radius. */
@@ -73,18 +73,6 @@
     flex-direction: column;
     text-align: center;
   }
-}
-
-/*
- * The panel hard-codes text-align: left and exposes no alignment prop, but this
- * page centred these panels at the narrow breakpoint, before they were panels
- * in the component sense.
- * className is the seam the spec sanctions for call-site layout, so the tweak
- * rides on a class the page passes in rather than reaching into `.panel`.
- * Raised as a design question on issue #1.
- */
-.next-steps-panel {
-  text-align: inherit;
 }
 
 #next-steps ul {

@@ -1,8 +1,13 @@
+/*
+ * A panel inherits its text alignment rather than declaring one. Owning
+ * `text-align: left` made the component fight the page whenever the page wanted
+ * its panels centred, and the fix had to be a call-site override that only won
+ * on source order. Alignment is the page's business. See issue #9.
+ */
 .panel {
   box-sizing: border-box;
   width: 100%;
   padding: 32px;
-  text-align: left;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg);
@@ -45,7 +50,10 @@
     font: inherit;
     letter-spacing: inherit;
     color: inherit;
-    text-align: left;
+    /* `inherit` rather than `left`: it neutralises the user agent's centred
+       default for a button while leaving alignment to the page, the same way
+       the three declarations above defer on typography. */
+    text-align: inherit;
     background: none;
     border: 0;
     cursor: pointer;

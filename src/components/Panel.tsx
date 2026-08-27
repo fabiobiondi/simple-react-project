@@ -33,6 +33,10 @@ export interface PanelProps extends Omit<ComponentProps<'section'>, 'title'> {
   onOpenChange?: (open: boolean) => void
 }
 
+/**
+ * A panel takes its text alignment from the page rather than declaring one, so
+ * a panel placed in centred content is centred. See issue #9.
+ */
 export function Panel({
   title,
   children,
