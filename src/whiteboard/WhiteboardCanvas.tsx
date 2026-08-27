@@ -1,18 +1,20 @@
 import { useLayoutEffect, useRef, type PointerEvent } from 'react'
-import { createDrawing } from './drawing'
+import { createDrawing, type StrokeStyle } from './drawing'
 import { finalSegment, newestSegment, type Point } from './geometry'
 import { paintDrawing, paintSegment } from './painter'
 import './WhiteboardCanvas.css'
-
-/** The one pen there is, until the toolbar arrives. */
-const PEN = { color: '#000000', width: 3 }
 
 const pointOf = (event: PointerEvent<HTMLCanvasElement>): Point => ({
   x: event.nativeEvent.offsetX,
   y: event.nativeEvent.offsetY,
 })
 
-export function WhiteboardCanvas() {
+export interface WhiteboardCanvasProps {
+  /** What the next stroke will be drawn with. Strokes already drawn keep theirs. */
+  tool: StrokeStyle
+}
+
+export function WhiteboardCanvas({ tool }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Not state: a stroke gathers a point per pointer event, and React does not
   // draw any of them.
@@ -89,7 +91,9 @@ export function WhiteboardCanvas() {
     // Capture, so a stroke that ends outside the canvas still ends here and
     // does not resume when the pointer wanders back in.
     event.currentTarget.setPointerCapture(event.pointerId)
-    drawingRef.current.begin(pointOf(event), PEN)
+    // Copied into the stroke as it begins, so changing tool later leaves
+    // what is already drawn alone.
+    drawingRef.current.begin(pointOf(event), tool)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {
