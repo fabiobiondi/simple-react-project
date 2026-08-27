@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from './components/Button'
+import { Panel } from './components/Panel'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -30,11 +31,16 @@ function App() {
       <div className="ticks"></div>
 
       <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
+        <Panel
+          id="docs"
+          className="next-steps-card"
+          title="Documentation"
+          icon={
+            <svg className="icon" role="presentation" aria-hidden="true">
+              <use href="/icons.svg#documentation-icon"></use>
+            </svg>
+          }
+        >
           <p>Your questions, answered</p>
           <ul>
             <li>
@@ -50,12 +56,17 @@ function App() {
               </a>
             </li>
           </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
+        </Panel>
+        <Panel
+          id="social"
+          className="next-steps-card"
+          title="Connect with us"
+          icon={
+            <svg className="icon" role="presentation" aria-hidden="true">
+              <use href="/icons.svg#social-icon"></use>
+            </svg>
+          }
+        >
           <p>Join the Vite community</p>
           <ul>
             <li>
@@ -107,7 +118,7 @@ function App() {
               </a>
             </li>
           </ul>
-        </div>
+        </Panel>
       </section>
 
       <div className="ticks"></div>

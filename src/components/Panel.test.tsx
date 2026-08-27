@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Panel } from './Panel'
 
 describe('Panel', () => {
@@ -295,5 +295,79 @@ describe('Panel', () => {
 
     expect(screen.queryByText('Your questions, answered')).not.toBeVisible()
     expect(screen.getByText('Join the community')).toBeVisible()
+  })
+
+  it('renders what a controlled panel is told, ignoring its own activation', async () => {
+    render(
+      <Panel title="Documentation" collapsible open={false}>
+        Your questions, answered
+      </Panel>,
+    )
+    const toggle = screen.getByRole('button', { name: 'Documentation' })
+    expect(screen.queryByText('Your questions, answered')).not.toBeVisible()
+
+    await userEvent.click(toggle)
+
+    expect(screen.queryByText('Your questions, answered')).not.toBeVisible()
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('reports the state a controlled panel wants to be in', async () => {
+    const onOpenChange = vi.fn()
+    render(
+      <Panel
+        title="Documentation"
+        collapsible
+        open={false}
+        onOpenChange={onOpenChange}
+      >
+        Your questions, answered
+      </Panel>,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Documentation' }))
+
+    expect(onOpenChange).toHaveBeenCalledWith(true)
+  })
+
+  it('follows its prop when a controlled panel is re-rendered', () => {
+    const { rerender } = render(
+      <Panel title="Documentation" collapsible open={false}>
+        Your questions, answered
+      </Panel>,
+    )
+    expect(screen.queryByText('Your questions, answered')).not.toBeVisible()
+
+    rerender(
+      <Panel title="Documentation" collapsible open>
+        Your questions, answered
+      </Panel>,
+    )
+
+    expect(screen.getByText('Your questions, answered')).toBeVisible()
+  })
+
+  it('ignores the initial-state prop entirely when controlled', () => {
+    render(
+      <Panel title="Documentation" collapsible defaultOpen={false} open>
+        Your questions, answered
+      </Panel>,
+    )
+
+    expect(screen.getByText('Your questions, answered')).toBeVisible()
+  })
+
+  it('reports state changes in uncontrolled mode too, without taking ownership', async () => {
+    const onOpenChange = vi.fn()
+    render(
+      <Panel title="Documentation" collapsible onOpenChange={onOpenChange}>
+        Your questions, answered
+      </Panel>,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Documentation' }))
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(screen.queryByText('Your questions, answered')).not.toBeVisible()
   })
 })

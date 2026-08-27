@@ -23,6 +23,14 @@ export interface PanelProps extends Omit<ComponentProps<'section'>, 'title'> {
   collapsible?: boolean
   /** Whether a collapsible panel starts open. Content is never hidden by accident. */
   defaultOpen?: boolean
+  /**
+   * Takes ownership of the open state. Its presence selects controlled mode.
+   * Only meaningful alongside `collapsible`: a panel that cannot collapse has
+   * no state and always renders its body.
+   */
+  open?: boolean
+  /** Called with the state the panel would like to be in. Fires in both modes. */
+  onOpenChange?: (open: boolean) => void
 }
 
 export function Panel({
@@ -34,11 +42,26 @@ export function Panel({
   className,
   collapsible = false,
   defaultOpen = true,
+  open,
+  onOpenChange,
   ...rest
 }: PanelProps) {
   const titleId = useId()
   const bodyId = useId()
-  const [open, setOpen] = useState(defaultOpen)
+  // Presence of `open` selects controlled mode: the panel then renders exactly
+  // what it is told and never changes state on its own, so there is one source
+  // of truth. `defaultOpen` seeds the uncontrolled state only.
+  const isControlled = open !== undefined
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen)
+  const isOpen = isControlled ? open : uncontrolledOpen
+
+  const requestToggle = () => {
+    const wanted = !isOpen
+    // Updater form so two toggles dispatched in one batch cannot collapse into
+    // one, even though `wanted` is what the consumer is told.
+    if (!isControlled) setUncontrolledOpen((wasOpen) => !wasOpen)
+    onOpenChange?.(wanted)
+  }
   const Heading = `h${headingLevel}` as const
 
   const classes = ['panel', className].filter(Boolean).join(' ')
@@ -57,9 +80,9 @@ export function Panel({
           <button
             type="button"
             className="panel-toggle"
-            aria-expanded={open}
+            aria-expanded={isOpen}
             aria-controls={bodyId}
-            onClick={() => setOpen((wasOpen) => !wasOpen)}
+            onClick={requestToggle}
           >
             {title}
           </button>
@@ -72,7 +95,7 @@ export function Panel({
         what takes collapsed content out of the accessibility tree AND out of the
         tab order. The body stays mounted, so state inside it survives a cycle.
       */}
-      <div className="panel-body" id={bodyId} hidden={collapsible && !open}>
+      <div className="panel-body" id={bodyId} hidden={collapsible && !isOpen}>
         {children}
       </div>
       {footer ? <div className="panel-footer">{footer}</div> : null}
