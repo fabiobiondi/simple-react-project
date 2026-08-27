@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -25,15 +26,19 @@ export interface WhiteboardHandle {
 }
 
 export interface WhiteboardCanvasProps {
-  /** What the next stroke will be drawn with. Strokes already drawn keep theirs. */
-  tool: StrokeStyle
+  /**
+   * What the next stroke will be drawn with. Strokes already drawn keep
+   * theirs. Not a Tool: whether the eraser is down has already been resolved
+   * into a colour by the time it gets here.
+   */
+  style: StrokeStyle
   ref?: Ref<WhiteboardHandle>
 }
 
 /** The name a board is saved under. */
 const FILENAME = 'whiteboard.png'
 
-export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
+export function WhiteboardCanvas({ style, ref }: WhiteboardCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   // Not state: a stroke gathers a point per pointer event, and React does not
   // draw any of them.
@@ -42,38 +47,39 @@ export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
   // jsdom has no 2D context, so every use of it is optional rather than a
   // guarantee. The component still renders and still records strokes there.
   const context = () => canvasRef.current?.getContext('2d') ?? null
-  // Set once the canvas is fitted; repainting from outside the effect needs it.
-  const repaintRef = useRef(() => {})
+
+  /**
+   * Re-fits the canvas to its box and repaints the drawing onto it.
+   *
+   * Assigning `width` or `height` wipes the bitmap, the transform and every
+   * style — even when the value assigned is the one already there — so this is
+   * never a cheap no-op, and the drawing has to be painted back every time.
+   * The strokes keep their coordinates: a bigger box shows more of the
+   * whiteboard rather than a magnified copy of it.
+   *
+   * Defined out here rather than inside the effect so that clearing can reach
+   * it without going through a ref that may not have been filled in yet.
+   */
+  const fit = useCallback(() => {
+    const canvas = canvasRef.current
+    const target = canvas?.getContext('2d')
+    if (!canvas || !target) return
+
+    const ratio = window.devicePixelRatio || 1
+    const { clientWidth: width, clientHeight: height } = canvas
+
+    canvas.width = Math.round(width * ratio)
+    canvas.height = Math.round(height * ratio)
+    // One transform, so everything else can speak in CSS pixels.
+    target.setTransform(ratio, 0, 0, ratio, 0, 0)
+
+    paintDrawing(target, drawingRef.current.strokes, { width, height })
+  }, [])
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    /**
-     * Re-fits the canvas to its box and repaints the drawing onto it.
-     *
-     * Assigning `width` or `height` wipes the bitmap, the transform and every
-     * style — even when the value assigned is the one already there — so this
-     * is never a cheap no-op, and the drawing has to be painted back every
-     * time. The strokes keep their coordinates: a bigger box shows more of the
-     * whiteboard rather than a magnified copy of it.
-     */
-    const fit = () => {
-      const target = canvas.getContext('2d')
-      if (!target) return
-
-      const ratio = window.devicePixelRatio || 1
-      const { clientWidth: width, clientHeight: height } = canvas
-
-      canvas.width = Math.round(width * ratio)
-      canvas.height = Math.round(height * ratio)
-      // One transform, so everything else can speak in CSS pixels.
-      target.setTransform(ratio, 0, 0, ratio, 0, 0)
-
-      paintDrawing(target, drawingRef.current.strokes, { width, height })
-    }
-
-    repaintRef.current = fit
     fit()
 
     const observer = new ResizeObserver(fit)
@@ -106,14 +112,14 @@ export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
       observer.disconnect()
       stopWatchingRatio?.()
     }
-  }, [])
+  }, [fit])
 
   useImperativeHandle(ref, () => ({
     clear() {
       drawingRef.current.clear()
       // The bitmap keeps whatever was painted on it until something repaints:
       // emptying the strokes is not enough to empty the board.
-      repaintRef.current()
+      fit()
     },
 
     exportPng() {
@@ -127,8 +133,12 @@ export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
         const link = document.createElement('a')
         link.href = url
         link.download = FILENAME
+        document.body.append(link)
         link.click()
-        URL.revokeObjectURL(url)
+        link.remove()
+        // Revoked on a later turn: revoking synchronously after the click
+        // cancels the download outright in some browsers.
+        setTimeout(() => URL.revokeObjectURL(url), 0)
       }, 'image/png')
     },
   }))
@@ -140,7 +150,7 @@ export function WhiteboardCanvas({ tool, ref }: WhiteboardCanvasProps) {
     event.currentTarget.setPointerCapture(event.pointerId)
     // Copied into the stroke as it begins, so changing tool later leaves
     // what is already drawn alone.
-    drawingRef.current.begin(pointOf(event), tool)
+    drawingRef.current.begin(pointOf(event), style)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLCanvasElement>) => {

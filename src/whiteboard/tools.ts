@@ -1,5 +1,11 @@
 import type { StrokeStyle } from './drawing'
-import { BACKGROUND } from './painter'
+
+/**
+ * The board's own white. Lives here, with the rest of the domain's constants,
+ * rather than in the painter: that the board is white is a fact about the
+ * board, and the painter is one of the things that has to know it.
+ */
+export const BOARD = '#ffffff'
 
 /**
  * The colours on offer. All opaque, and that is a correctness constraint
@@ -7,7 +13,7 @@ import { BACKGROUND } from './painter'
  * of darker dots where the incremental strokes overlap, and would make live
  * drawing and a repaint disagree.
  */
-export const COLOURS = [
+export const COLORS = [
   { name: 'Black', value: '#08060d' },
   { name: 'Red', value: '#d73a4a' },
   { name: 'Blue', value: '#0969da' },
@@ -28,7 +34,7 @@ export type Tool = StrokeStyle & { erasing: boolean }
 
 /** What the board starts on. */
 export const DEFAULT_TOOL: Tool = {
-  color: COLOURS[0].value,
+  color: COLORS[0].value,
   width: WIDTHS[1].value,
   erasing: false,
 }
@@ -42,7 +48,7 @@ export const DEFAULT_TOOL: Tool = {
  */
 export function strokeStyleOf(tool: Tool): StrokeStyle {
   return {
-    color: tool.erasing ? BACKGROUND : tool.color,
+    color: tool.erasing ? BOARD : tool.color,
     width: tool.width,
   }
 }

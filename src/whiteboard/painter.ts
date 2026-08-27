@@ -1,12 +1,6 @@
 import type { Stroke, StrokeStyle } from './drawing'
 import { segmentsOf, type Segment } from './geometry'
-
-/**
- * The whiteboard is white, and its white is painted on the canvas rather than
- * showing through from behind it: a repaint starts from a cleared bitmap, and
- * without this the cleared parts would stay transparent.
- */
-export const BACKGROUND = '#ffffff'
+import { BOARD } from './tools'
 
 /** What a canvas must be told before anything is painted on it. */
 export type Size = { width: number; height: number }
@@ -55,7 +49,10 @@ export function paintDrawing(
   strokes: readonly Stroke[],
   size: Size,
 ) {
-  context.fillStyle = BACKGROUND
+  // The board's white is painted on, not shown through from behind: a repaint
+  // starts from a cleared bitmap, and without this the cleared parts would
+  // stay transparent.
+  context.fillStyle = BOARD
   context.fillRect(0, 0, size.width, size.height)
 
   for (const stroke of strokes) {

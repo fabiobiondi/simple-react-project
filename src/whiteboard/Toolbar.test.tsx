@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { Toolbar } from './Toolbar'
-import { COLOURS, DEFAULT_TOOL, WIDTHS } from './tools'
+import { COLORS, DEFAULT_TOOL, WIDTHS } from './tools'
 
 const renderToolbar = (tool = DEFAULT_TOOL) => {
   const onToolChange = vi.fn()
@@ -20,16 +20,16 @@ const renderToolbar = (tool = DEFAULT_TOOL) => {
 }
 
 describe('Toolbar', () => {
-  it('is exposed as a named toolbar', () => {
+  it('is exposed as a named group of controls', () => {
     renderToolbar()
 
-    expect(screen.getByRole('toolbar', { name: /tools/i })).toBeVisible()
+    expect(screen.getByRole('group', { name: /tools/i })).toBeVisible()
   })
 
   it('offers every colour as a named button', () => {
     renderToolbar()
 
-    for (const colour of COLOURS) {
+    for (const colour of COLORS) {
       expect(screen.getByRole('button', { name: colour.name })).toBeVisible()
     }
   })
@@ -43,16 +43,16 @@ describe('Toolbar', () => {
   })
 
   it('shows which colour is in use, and only one', () => {
-    renderToolbar({ ...DEFAULT_TOOL, color: COLOURS[1].value })
+    renderToolbar({ ...DEFAULT_TOOL, color: COLORS[1].value })
 
-    const pressed = COLOURS.filter(
+    const pressed = COLORS.filter(
       (colour) =>
         screen
           .getByRole('button', { name: colour.name })
           .getAttribute('aria-pressed') === 'true',
     )
 
-    expect(pressed).toEqual([COLOURS[1]])
+    expect(pressed).toEqual([COLORS[1]])
   })
 
   it('shows which width is in use, and only one', () => {
@@ -71,11 +71,11 @@ describe('Toolbar', () => {
   it('asks for a new colour without disturbing the width', async () => {
     const { onToolChange } = renderToolbar()
 
-    await userEvent.click(screen.getByRole('button', { name: COLOURS[1].name }))
+    await userEvent.click(screen.getByRole('button', { name: COLORS[1].name }))
 
     expect(onToolChange).toHaveBeenCalledWith({
       ...DEFAULT_TOOL,
-      color: COLOURS[1].value,
+      color: COLORS[1].value,
     })
   })
 
@@ -94,19 +94,24 @@ describe('Toolbar', () => {
     // A semi-transparent stroke would leave a necklace of darker dots where
     // the incremental strokes overlap, and would make live drawing and a
     // repaint disagree. Opacity is a correctness constraint here, not a style.
-    for (const colour of COLOURS) {
+    for (const colour of COLORS) {
       expect(colour.value).toMatch(/^#[0-9a-f]{6}$/i)
     }
   })
 
-  it('offers the eraser, and shows when it is in use', () => {
+  it('offers an eraser, idle until it is picked up', () => {
     renderToolbar()
-    const eraser = screen.getByRole('button', { name: 'Eraser' })
-    expect(eraser).toHaveAttribute('aria-pressed', 'false')
 
+    expect(screen.getByRole('button', { name: 'Eraser' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
+  it('shows the eraser as in use while erasing', () => {
     renderToolbar({ ...DEFAULT_TOOL, erasing: true })
 
-    expect(screen.getAllByRole('button', { name: 'Eraser' })[1]).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Eraser' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -126,7 +131,7 @@ describe('Toolbar', () => {
   it('claims no colour while erasing, which would be a lie', () => {
     renderToolbar({ ...DEFAULT_TOOL, erasing: true })
 
-    for (const colour of COLOURS) {
+    for (const colour of COLORS) {
       expect(
         screen.getByRole('button', { name: colour.name }),
       ).toHaveAttribute('aria-pressed', 'false')
@@ -136,11 +141,11 @@ describe('Toolbar', () => {
   it('picking a colour puts the eraser down', async () => {
     const { onToolChange } = renderToolbar({ ...DEFAULT_TOOL, erasing: true })
 
-    await userEvent.click(screen.getByRole('button', { name: COLOURS[2].name }))
+    await userEvent.click(screen.getByRole('button', { name: COLORS[2].name }))
 
     expect(onToolChange).toHaveBeenCalledWith({
       ...DEFAULT_TOOL,
-      color: COLOURS[2].value,
+      color: COLORS[2].value,
       erasing: false,
     })
   })

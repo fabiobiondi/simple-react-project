@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BACKGROUND } from './painter'
-import { COLOURS, DEFAULT_TOOL, strokeStyleOf, WIDTHS } from './tools'
+import { BOARD, COLORS, DEFAULT_TOOL, strokeStyleOf, WIDTHS } from './tools'
 
 describe('strokeStyleOf', () => {
   it('draws in the chosen colour', () => {
@@ -14,7 +13,7 @@ describe('strokeStyleOf', () => {
     // exactly as a cloth is on a real whiteboard. If these two ever drifted
     // apart, erasing would leave a visible ghost.
     expect(strokeStyleOf({ color: '#d73a4a', width: 4, erasing: true })).toEqual(
-      { color: BACKGROUND, width: 4 },
+      { color: BOARD, width: 4 },
     )
   })
 
@@ -34,7 +33,7 @@ describe('strokeStyleOf', () => {
 
 describe('DEFAULT_TOOL', () => {
   it('starts on a colour and a width it actually offers, and not erasing', () => {
-    expect(COLOURS.map((c) => c.value)).toContain(DEFAULT_TOOL.color)
+    expect(COLORS.map((c) => c.value)).toContain(DEFAULT_TOOL.color)
     expect(WIDTHS.map((w) => w.value)).toContain(DEFAULT_TOOL.width)
     expect(DEFAULT_TOOL.erasing).toBe(false)
   })
